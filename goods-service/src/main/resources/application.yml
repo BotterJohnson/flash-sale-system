@@ -1,0 +1,25 @@
+server:
+  port: 18001
+
+spring:
+  application:
+    name: goods
+  datasource:
+    url: jdbc:mysql://localhost:33061/goods?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+  jpa:
+    show-sql: false
+
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://127.0.0.1:8761/eureka
+  instance:
+    status-page-url: http://localhost:18001/doc.html
