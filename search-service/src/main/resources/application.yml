@@ -1,0 +1,26 @@
+server:
+  port: 18003
+spring:
+  config:
+    import: classpath:swagger-common.yml
+  application:
+    name: search-service
+  main:
+    allow-bean-definition-overriding: true
+  data:
+    elasticsearch:
+      repositories:
+        enabled: true
+  elasticsearch:
+    uris: http://127.0.0.1:9200
+
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://127.0.0.1:8761/eureka
+  instance:
+    status-page-url: http://localhost:18003/doc.html
+feign:
+  hystrix:
+    enabled: true

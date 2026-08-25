@@ -4,7 +4,7 @@ package com.botter.shop.user;
  * Hello world!
  *
  */
-public class App 
+public class UserApp
 {
     public static void main( String[] args )
     {

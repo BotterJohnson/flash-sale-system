@@ -2,8 +2,10 @@ server:
   port: 18001
 
 spring:
+  config:
+    import: classpath:swagger-common.yml
   application:
-    name: goods
+    name: goods-service
   datasource:
     url: jdbc:mysql://localhost:33061/goods?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
     username: root
@@ -15,7 +17,6 @@ spring:
       connection-timeout: 30000
   jpa:
     show-sql: false
-
 
 eureka:
   client:

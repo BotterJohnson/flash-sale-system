@@ -14,6 +14,9 @@
     <module>common</module>
     <module>goods-service</module>
     <module>goods-service-client</module>
+    <module>gateway-service</module>
+    <module>search-service</module>
+    <module>user-service</module>
   </modules>
 
     <properties>
@@ -22,6 +25,8 @@
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <spring-cloud.version>2025.0.3</spring-cloud.version>
+        <mapstruct.version>1.6.3</mapstruct.version>
+        <springdoc.version>2.8.17</springdoc.version>
     </properties>
 
   <parent>
