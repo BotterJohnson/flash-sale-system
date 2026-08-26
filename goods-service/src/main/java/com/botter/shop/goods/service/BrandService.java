@@ -1,16 +1,17 @@
 package com.botter.shop.goods.service;
 
 import com.botter.shop.common.exception.GlobalException;
-import com.botter.shop.common.result.CodeMsg;
 import com.botter.shop.common.result.ResultMsgEnum;
+import com.botter.shop.goods.dto.BrandDTO;
+import com.botter.shop.goods.mapper.BrandMapper;
 import com.botter.shop.goods.model.Brand;
+import com.botter.shop.goods.model.CategoryBrand;
 import com.botter.shop.goods.repository.BrandRepository;
-import jakarta.annotation.Resource;
+import com.botter.shop.goods.repository.CategoryBrandRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.domain.Example;
-import org.springframework.data.domain.ExampleMatcher;
-import org.springframework.data.domain.Sort;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -24,8 +25,12 @@ import java.util.List;
 @Service
 public class BrandService {
     private static Logger logger = LoggerFactory.getLogger(BrandService.class);
-    @Resource
+    @Autowired
     private BrandRepository brandRepository;
+    @Autowired
+    private BrandMapper brandMapper;
+    @Autowired
+    private CategoryBrandRepository categoryBrandRepository;
 
     public Brand getById(long id) {
         return brandRepository.getReferenceById(id);
@@ -52,12 +57,30 @@ public class BrandService {
     }
 
 
-    public List<Brand> searchList(Brand brand) {
+    public List<BrandDTO> searchList(Brand brand) {
         ExampleMatcher exampleMatcher = ExampleMatcher.matching()
                 .withIgnoreNullValues()
                 .withStringMatcher(ExampleMatcher.StringMatcher.CONTAINING)
                 .withIgnoreCase(true);
         Example<Brand> example = Example.of(brand, exampleMatcher);
-        return brandRepository.findAll(example);
+        var res = brandRepository.findAll(example);
+        return brandMapper.toDTOList(res);
+    }
+
+    public Page<BrandDTO> listWithPage(int page, int size) {
+        var brands = brandRepository.findAll(PageRequest.of(page, size));
+        return brandMapper.toDTOPage(brands);
+    }
+
+    public Page<BrandDTO> searchWithPage(Brand brand, int page, int size) {
+        var brands = brandRepository.findAll(PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "id")));
+        return brandMapper.toDTOPage(brands);
+    }
+
+    public List<BrandDTO> listByCategoryId(long categoryId) {
+        List<CategoryBrand> categoryBrands = categoryBrandRepository.findByCategoryId(categoryId);
+        List<Long> brandIDs = categoryBrands.stream().map(CategoryBrand::getBrandId).toList();
+        var allById = brandRepository.findAllById(brandIDs);
+        return brandMapper.toDTOList(allById);
     }
 }
