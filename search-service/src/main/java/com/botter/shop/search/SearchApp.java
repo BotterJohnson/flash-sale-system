@@ -11,7 +11,9 @@ import org.springframework.context.annotation.ComponentScan;
  */
 @SpringBootApplication
 @EnableFeignClients(basePackages = "com.botter.shop.goods.api")
-@ComponentScan(basePackages = {"com.botter.shop.search","com.botter.shop.common","com.botter.shop.goods"})
+@ComponentScan(basePackages = {"com.botter.shop.search",
+        "com.botter.shop.common",
+        "com.botter.shop.goods"})
 public class SearchApp
 {
     public static void main( String[] args )

@@ -1,78 +1,875 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>搜索商品</title>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <!-- jquery -->
-    <script type="text/javascript" src="/js/jquery.min.js"></script>
-    <!-- bootstrap -->
-    <link rel="stylesheet" type="text/css" href="/bootstrap/css/bootstrap.min.css" />
-    <script type="text/javascript" src="/bootstrap/js/bootstrap.min.js"></script>
-    <!-- jquery-validator -->
-    <script type="text/javascript" src="/jquery-validation/jquery.validate.min.js"></script>
-    <script type="text/javascript" src="/jquery-validation/localization/messages_zh.min.js"></script>
-    <!-- layer -->
-    <script type="text/javascript" src="/layer/layer.js"></script>
-    <!-- md5.js -->
-    <script type="text/javascript" src="/js/md5.min.js"></script>
-    <!-- common.js -->
-    <script type="text/javascript" src="/js/common.js"></script>
-    <!-- self js -->
-    <script type="text/javascript" src="/js/search_goods.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BotterShop — 商品搜索</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/md5.min.js"></script>
+    <script src="/js/common.js"></script>
+
+    <style>
+        /* =========================================================
+           Reset & Root
+        ========================================================= */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --primary: #7c3aed;          /* violet-600 */
+            --primary-2: #ec4899;        /* pink-500 */
+            --primary-hover: #6d28d9;
+            --primary-soft: rgba(124,58,237,.10);
+            --primary-glow: rgba(124,58,237,.35);
+
+            --bg: #f7f8fc;
+            --bg-grad-1: #ede9fe;
+            --bg-grad-2: #fce7f3;
+            --surface: #ffffff;
+            --surface-2: #f3f4f8;
+            --border: #e8eaf2;
+            --border-strong: #d4d7e6;
+
+            --text: #1f2937;
+            --text-muted: #6b7280;
+            --text-soft: #9ca3af;
+
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+
+            --radius-sm: 8px;
+            --radius: 12px;
+            --radius-lg: 18px;
+
+            --shadow-sm: 0 1px 3px rgba(20,16,64,.05);
+            --shadow: 0 8px 24px rgba(20,16,64,.08);
+            --shadow-lg: 0 20px 50px rgba(20,16,64,.12);
+        }
+
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            background-image:
+                radial-gradient(circle at 0% 0%, var(--bg-grad-1) 0%, transparent 45%),
+                radial-gradient(circle at 100% 0%, var(--bg-grad-2) 0%, transparent 45%);
+            background-attachment: fixed;
+            color: var(--text);
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* =========================================================
+           Navbar
+        ========================================================= */
+        .navbar {
+            position: sticky; top: 0; z-index: 100;
+            background: rgba(255,255,255,.78);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 32px;
+        }
+        .navbar-inner {
+            max-width: 1280px; margin: 0 auto;
+            display: flex; align-items: center; gap: 24px;
+        }
+        .navbar-brand {
+            font-size: 1.25rem; font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--primary-2));
+            -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-decoration: none; letter-spacing: -.02em;
+            white-space: nowrap;
+        }
+        .navbar-brand .bolt { display: inline-block; margin-right: 4px; }
+
+        .navbar-search {
+            flex: 1; max-width: 560px;
+            display: flex; align-items: center;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: 4px 4px 4px 18px;
+            transition: box-shadow .25s, border-color .25s, transform .15s;
+        }
+        .navbar-search:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px var(--primary-soft);
+        }
+        .navbar-search .search-icon {
+            width: 16px; height: 16px;
+            color: var(--text-soft); margin-right: 10px; flex-shrink: 0;
+        }
+        .navbar-search input {
+            flex: 1; border: none; outline: none; background: transparent;
+            padding: 8px 0; font-size: .92rem; color: var(--text);
+        }
+        .navbar-search input::placeholder { color: var(--text-soft); }
+        .navbar-search button {
+            border: none; cursor: pointer;
+            background: linear-gradient(135deg, var(--primary), var(--primary-2));
+            color: #fff; font-weight: 600; font-size: .85rem;
+            padding: 8px 20px; border-radius: 999px;
+            transition: transform .15s, box-shadow .15s, filter .15s;
+            box-shadow: 0 4px 12px var(--primary-glow);
+        }
+        .navbar-search button:hover { transform: translateY(-1px); filter: brightness(1.05); }
+        .navbar-search button:active { transform: translateY(0); }
+
+        .navbar-right {
+            display: flex; align-items: center; gap: 8px;
+            margin-left: auto;
+        }
+        .nav-link {
+            color: var(--text-muted); text-decoration: none;
+            font-size: .875rem; padding: 8px 12px; border-radius: var(--radius-sm);
+            transition: background .15s, color .15s;
+            position: relative;
+        }
+        .nav-link:hover { background: var(--surface-2); color: var(--text); }
+        .nav-link .badge {
+            position: absolute; top: 2px; right: 2px;
+            background: var(--primary-2); color: #fff;
+            font-size: .65rem; font-weight: 700;
+            padding: 1px 5px; border-radius: 999px; line-height: 1.4;
+        }
+
+        /* =========================================================
+           Page hero (slim, integrated)
+        ========================================================= */
+        .page {
+            max-width: 1280px; margin: 0 auto;
+            padding: 28px 32px 80px;
+        }
+
+        .page-title {
+            display: flex; align-items: baseline; gap: 10px;
+            margin-bottom: 4px;
+        }
+        .page-title h1 {
+            font-size: 1.5rem; font-weight: 700;
+            color: var(--text); letter-spacing: -.01em;
+        }
+        .page-title .keyword {
+            color: var(--primary); font-weight: 600;
+        }
+        .page-title .count {
+            font-size: .85rem; color: var(--text-muted);
+            margin-left: auto;
+        }
+        .page-subtitle {
+            color: var(--text-muted); font-size: .875rem;
+            margin-bottom: 24px;
+        }
+
+        /* =========================================================
+           Filter card (horizontal layout)
+        ========================================================= */
+        .filter-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .filter-row {
+            display: grid;
+            grid-template-columns: 72px 1fr;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 14px 22px;
+            border-bottom: 1px dashed var(--border);
+            transition: background .15s;
+        }
+        .filter-row:last-child { border-bottom: none; }
+        .filter-row:hover { background: rgba(124,58,237,.02); }
+
+        .filter-label {
+            font-size: .8rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            padding-top: 8px;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            white-space: nowrap;
+        }
+
+        .filter-body {
+            display: flex; flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .chip {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 6px 14px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text);
+            font-size: .82rem; font-weight: 500;
+            border-radius: 999px;
+            cursor: pointer;
+            transition: all .18s ease;
+            user-select: none;
+            white-space: nowrap;
+        }
+        .chip:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateY(-1px);
+        }
+        .chip.active {
+            background: linear-gradient(135deg, var(--primary), var(--primary-2));
+            border-color: transparent;
+            color: #fff;
+            box-shadow: 0 4px 12px var(--primary-glow);
+        }
+        .chip .x {
+            font-size: .9rem; opacity: .7; margin-left: 2px;
+        }
+        .chip-more {
+            font-size: .8rem; color: var(--primary);
+            background: none; border: none; cursor: pointer;
+            padding: 6px 8px; font-weight: 500;
+        }
+        .chip-more:hover { text-decoration: underline; }
+
+        /* specs (multi-key) */
+        .specs-group {
+            display: flex; flex-direction: column; gap: 10px;
+            width: 100%;
+        }
+        .specs-group + .specs-group { padding-top: 8px; border-top: 1px dashed var(--border); margin-top: 4px; }
+        .specs-group-title {
+            font-size: .78rem; color: var(--text-muted);
+            font-weight: 600; margin-right: 4px;
+        }
+
+        /* price row */
+        .price-controls {
+            display: flex; align-items: center;
+            gap: 10px; flex-wrap: wrap;
+        }
+        .price-input {
+            width: 110px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            border-radius: var(--radius-sm);
+            padding: 8px 12px;
+            font-size: .85rem; color: var(--text);
+            outline: none; transition: border-color .15s, box-shadow .15s;
+            font-family: inherit;
+        }
+        .price-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-soft);
+        }
+        .price-dash { color: var(--text-soft); font-size: .9rem; }
+        .btn-primary-sm {
+            border: none; cursor: pointer;
+            background: linear-gradient(135deg, var(--primary), var(--primary-2));
+            color: #fff; font-weight: 600; font-size: .82rem;
+            padding: 8px 18px; border-radius: var(--radius-sm);
+            transition: transform .15s, box-shadow .15s, filter .15s;
+            box-shadow: 0 4px 12px var(--primary-glow);
+        }
+        .btn-primary-sm:hover { transform: translateY(-1px); filter: brightness(1.05); }
+        .btn-primary-sm:active { transform: translateY(0); }
+
+        .btn-ghost-sm {
+            border: 1px solid var(--border); cursor: pointer;
+            background: var(--surface); color: var(--text-muted);
+            font-weight: 500; font-size: .82rem;
+            padding: 7px 14px; border-radius: var(--radius-sm);
+            transition: all .15s;
+        }
+        .btn-ghost-sm:hover { border-color: var(--primary); color: var(--primary); }
+
+        /* =========================================================
+           Active filters bar
+        ========================================================= */
+        .active-bar {
+            display: flex; flex-wrap: wrap; align-items: center;
+            gap: 8px;
+            padding: 12px 18px;
+            background: linear-gradient(135deg, rgba(124,58,237,.06), rgba(236,72,153,.06));
+            border: 1px solid rgba(124,58,237,.15);
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+            animation: slideDown .25s ease both;
+        }
+        .active-bar-label {
+            font-size: .78rem; color: var(--primary);
+            font-weight: 600; margin-right: 4px;
+        }
+        .active-bar-clear {
+            margin-left: auto;
+            font-size: .8rem; color: var(--text-muted);
+            background: none; border: none; cursor: pointer;
+            padding: 4px 8px; border-radius: 6px;
+            transition: background .15s, color .15s;
+        }
+        .active-bar-clear:hover { background: var(--surface-2); color: var(--danger); }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* =========================================================
+           Toolbar (sort + view switcher)
+        ========================================================= */
+        .toolbar {
+            display: flex; align-items: center;
+            gap: 12px; flex-wrap: wrap;
+            margin-bottom: 18px;
+        }
+        .toolbar-info {
+            font-size: .875rem; color: var(--text-muted);
+        }
+        .toolbar-info b { color: var(--text); font-weight: 700; }
+
+        .toolbar-spacer { flex: 1; }
+
+        .sort-group {
+            display: inline-flex;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 3px;
+            box-shadow: var(--shadow-sm);
+        }
+        .sort-btn {
+            border: none; background: transparent;
+            padding: 7px 14px;
+            font-size: .82rem; font-weight: 500;
+            color: var(--text-muted);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all .18s;
+            display: inline-flex; align-items: center; gap: 4px;
+        }
+        .sort-btn:hover { color: var(--text); }
+        .sort-btn.active {
+            background: linear-gradient(135deg, var(--primary), var(--primary-2));
+            color: #fff;
+            box-shadow: 0 4px 12px var(--primary-glow);
+        }
+
+        .view-switch {
+            display: inline-flex;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 3px;
+            box-shadow: var(--shadow-sm);
+        }
+        .view-btn {
+            border: none; background: transparent;
+            width: 34px; height: 32px;
+            display: inline-flex; align-items: center; justify-content: center;
+            color: var(--text-muted); cursor: pointer;
+            border-radius: 6px;
+            transition: all .15s;
+        }
+        .view-btn svg { width: 16px; height: 16px; }
+        .view-btn:hover { color: var(--text); }
+        .view-btn.active {
+            background: var(--surface-2);
+            color: var(--primary);
+        }
+
+        /* =========================================================
+           Goods grid
+        ========================================================= */
+        .goods {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 18px;
+        }
+        .goods.list {
+            grid-template-columns: 1fr;
+        }
+
+        .g-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+            transition: transform .25s cubic-bezier(.2,.8,.2,1),
+                        box-shadow .25s,
+                        border-color .25s;
+            animation: cardIn .35s ease both;
+        }
+        .g-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+            border-color: rgba(124,58,237,.35);
+        }
+
+        @keyframes cardIn {
+            from { opacity: 0; transform: translateY(14px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .g-img {
+            position: relative;
+            aspect-ratio: 1/1;
+            background: linear-gradient(135deg, #fafbff, #f1f2f8);
+            overflow: hidden;
+        }
+        .g-img img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            transition: transform .4s cubic-bezier(.2,.8,.2,1);
+        }
+        .g-card:hover .g-img img { transform: scale(1.06); }
+        .g-img-placeholder {
+            position: absolute; inset: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 3rem; color: var(--border-strong);
+        }
+        .g-tag {
+            position: absolute; top: 10px; left: 10px;
+            background: rgba(255,255,255,.92);
+            backdrop-filter: blur(8px);
+            color: var(--primary);
+            font-size: .68rem; font-weight: 700;
+            padding: 3px 8px; border-radius: 6px;
+            letter-spacing: .03em;
+        }
+        .g-stock-badge {
+            position: absolute; top: 10px; right: 10px;
+            background: rgba(16,185,129,.12);
+            color: var(--success);
+            font-size: .68rem; font-weight: 600;
+            padding: 3px 8px; border-radius: 6px;
+            backdrop-filter: blur(8px);
+        }
+        .g-stock-badge.low {
+            background: rgba(245,158,11,.15);
+            color: var(--warning);
+        }
+        .g-stock-badge.out {
+            background: rgba(239,68,68,.15);
+            color: var(--danger);
+        }
+
+        .g-body { padding: 14px; }
+        .g-name {
+            font-size: .92rem; font-weight: 600;
+            color: var(--text);
+            margin-bottom: 4px;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            min-height: 2.6em;
+        }
+
+        /* 命中关键词高亮：默认品牌紫，后端带 style 时保留其 color */
+        .g-name .hl,
+        .g-tag .hl,
+        .g-meta-item .hl {
+            color: var(--brand-1, #a855f7);
+            font-weight: 700;
+            background: linear-gradient(transparent 62%, rgba(168,85,247,.22) 62%);
+            padding: 0 2px;
+            border-radius: 3px;
+        }
+        /* 后端有内联 color 时尊重后端颜色，仅覆盖背景与字号 */
+        .g-name .hl[style*="color"],
+        .g-tag .hl[style*="color"],
+        .g-meta-item .hl[style*="color"] {
+            background: linear-gradient(transparent 62%, rgba(168,85,247,.12) 62%);
+        }
+        /* g-tag 是左上角品牌徽章，高亮要让底色更深一点更醒目 */
+        .g-tag .hl {
+            padding: 0 4px;
+            border-radius: 4px;
+        }
+        .g-meta {
+            font-size: .76rem; color: var(--text-muted);
+            margin-bottom: 12px;
+            display: flex; flex-wrap: wrap; gap: 4px;
+        }
+        .g-meta-item {
+            background: var(--surface-2);
+            padding: 2px 7px; border-radius: 4px;
+            font-size: .72rem;
+        }
+
+        .g-footer {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 8px;
+        }
+        .g-price {
+            display: flex; align-items: baseline; gap: 2px;
+        }
+        .g-price .cur { font-size: .78rem; font-weight: 600; color: var(--primary); }
+        .g-price .val {
+            font-size: 1.25rem; font-weight: 800;
+            color: var(--primary); letter-spacing: -.02em;
+        }
+        .g-cart {
+            border: none; cursor: pointer;
+            width: 36px; height: 36px;
+            background: var(--surface-2);
+            color: var(--primary);
+            border-radius: 10px;
+            display: inline-flex; align-items: center; justify-content: center;
+            transition: all .2s;
+        }
+        .g-cart:hover {
+            background: linear-gradient(135deg, var(--primary), var(--primary-2));
+            color: #fff;
+            transform: scale(1.08) rotate(-6deg);
+            box-shadow: 0 4px 12px var(--primary-glow);
+        }
+        .g-cart svg { width: 18px; height: 18px; }
+
+        /* list view override */
+        .goods.list {
+            grid-template-columns: 1fr;
+            gap: 14px;
+        }
+        .goods.list .g-card {
+            display: grid;
+            grid-template-columns: 140px 1fr auto;
+            gap: 18px;
+            align-items: stretch;
+            padding: 16px;
+        }
+        .goods.list .g-img {
+            width: 140px; height: 140px; aspect-ratio: auto;
+            border-radius: var(--radius);
+        }
+        .goods.list .g-body { padding: 0; display: flex; flex-direction: column; justify-content: center; }
+        .goods.list .g-name { font-size: 1rem; min-height: auto; -webkit-line-clamp: 1; }
+        .goods.list .g-meta { margin-bottom: 8px; }
+        .goods.list .g-footer {
+            flex-direction: column; align-items: flex-end; gap: 10px;
+            align-self: center;
+        }
+
+        .g-card.out-of-stock { opacity: .65; }
+        .g-card.out-of-stock:hover { transform: translateY(-2px); }
+        .g-card.out-of-stock .g-cart {
+            background: var(--surface-2); color: var(--text-soft); cursor: not-allowed;
+        }
+        .g-card.out-of-stock .g-cart:hover {
+            background: var(--surface-2); color: var(--text-soft);
+            transform: none; box-shadow: none;
+        }
+
+        /* =========================================================
+           Custom scrollbar
+        ========================================================= */
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(124,58,237,.18);
+            border-radius: 999px;
+            border: 2px solid transparent;
+            background-clip: padding-box;
+        }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(124,58,237,.35); background-clip: padding-box; }
+
+        /* =========================================================
+           Empty / Loading
+        ========================================================= */
+        .empty {
+            grid-column: 1/-1;
+            text-align: center;
+            padding: 60px 20px 80px;
+            color: var(--text-muted);
+            animation: cardIn .35s ease both;
+        }
+        .empty .icon {
+            font-size: 3.8rem; margin-bottom: 16px;
+            opacity: .35;
+            filter: grayscale(.2);
+        }
+        .empty p { font-size: .95rem; margin-bottom: 18px; }
+        .empty .suggestions {
+            display: inline-flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+            max-width: 600px;
+        }
+        .empty .suggestions .chip { font-size: .8rem; }
+
+        .skeleton {
+            background: linear-gradient(90deg,
+                var(--surface-2) 0%, var(--border) 50%, var(--surface-2) 100%);
+            background-size: 200% 100%;
+            animation: shimmer 1.4s infinite linear;
+        }
+        @keyframes shimmer {
+            from { background-position: 200% 0; }
+            to   { background-position: -200% 0; }
+        }
+
+        /* =========================================================
+           Pagination
+        ========================================================= */
+        .pagination {
+            display: flex; justify-content: center; gap: 6px;
+            margin-top: 36px;
+        }
+        .page-btn {
+            min-width: 38px; height: 38px; padding: 0 12px;
+            display: inline-flex; align-items: center; justify-content: center;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-muted);
+            font-size: .85rem; font-weight: 500;
+            cursor: pointer;
+            transition: all .18s;
+            box-shadow: var(--shadow-sm);
+        }
+        .page-btn:hover:not(:disabled) {
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateY(-1px);
+        }
+        .page-btn.active {
+            background: linear-gradient(135deg, var(--primary), var(--primary-2));
+            border-color: transparent;
+            color: #fff;
+            box-shadow: 0 4px 12px var(--primary-glow);
+        }
+        .page-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+        /* =========================================================
+           Toast
+        ========================================================= */
+        #toast {
+            position: fixed; bottom: 28px; left: 50%;
+            transform: translateX(-50%) translateY(40px);
+            background: rgba(31,41,55,.95);
+            backdrop-filter: blur(8px);
+            color: #fff;
+            padding: 11px 22px;
+            border-radius: 999px;
+            font-size: .85rem; font-weight: 500;
+            box-shadow: var(--shadow-lg);
+            opacity: 0;
+            pointer-events: none;
+            transition: all .3s cubic-bezier(.2,.8,.2,1);
+            z-index: 999;
+        }
+        #toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        /* =========================================================
+           Responsive
+        ========================================================= */
+        @media (max-width: 1024px) {
+            .navbar { padding: 14px 16px; }
+            .navbar-inner { gap: 12px; }
+            .page { padding: 20px 16px 60px; }
+            .navbar-search { max-width: none; }
+        }
+
+        @media (max-width: 640px) {
+            .navbar-search { display: none; }
+            .filter-row {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+            .filter-label { padding-top: 0; }
+            .goods { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+            .goods.list .g-card {
+                grid-template-columns: 96px 1fr;
+                gap: 12px;
+            }
+            .goods.list .g-img { width: 96px; height: 96px; }
+            .g-body { padding: 10px; }
+            .g-name { font-size: .85rem; }
+        }
+    </style>
 </head>
 <body>
-<div style="margin-top:20px;margin-left:20px;">
-    <div class="row">
-        <div class="col-lg-6">
-            <div class="input-group">
-                <input id="key" type="text" class="form-control" placeholder="输入关键词搜索...">
-                <span class="input-group-btn">
-        <button class="btn btn-default" type="button" onclick="search()">搜索</button>
-      </span>
+
+<!-- ============== Navbar ============== -->
+<nav class="navbar">
+    <div class="navbar-inner">
+        <a class="navbar-brand" href="/search_goods.html">
+            <span class="bolt">⚡</span>BotterShop
+        </a>
+
+        <div class="navbar-search">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <circle cx="11" cy="11" r="7"></circle>
+                <path d="M21 21l-4.3-4.3"></path>
+            </svg>
+            <input id="key" type="text" placeholder="搜索商品、品牌或关键词…" autocomplete="off"
+                   onkeydown="if(event.key==='Enter')search(true)">
+            <button onclick="search(true)">搜索</button>
+        </div>
+
+        <div class="navbar-right">
+            <a class="nav-link" href="#" title="我的订单">订单</a>
+            <a class="nav-link" href="#" title="购物车">
+                购物车<span class="badge">0</span>
+            </a>
+            <a class="nav-link" href="/login.html">登录</a>
+        </div>
+    </div>
+</nav>
+
+<!-- ============== Page ============== -->
+<main class="page">
+
+    <!-- Title -->
+    <div class="page-title">
+        <h1>搜索结果</h1>
+        <span id="titleKeyword" class="keyword" style="display:none"></span>
+        <span class="count" id="totalCount">输入关键词开始探索</span>
+    </div>
+    <p class="page-subtitle">用筛选器精准定位你的下一件心仪好物 ✨</p>
+
+    <!-- Active filters bar (dynamic) -->
+    <div class="active-bar" id="activeFilters" style="display:none">
+        <span class="active-bar-label">已选条件</span>
+        <div id="filterTags" style="display:contents"></div>
+        <button class="active-bar-clear" onclick="clearFilters()">✕ 清除全部</button>
+    </div>
+
+    <!-- ============== Filters ============== -->
+    <section class="filter-card">
+
+        <!-- Category row -->
+        <div class="filter-row" id="categoryRow" style="display:none">
+            <div class="filter-label">类目</div>
+            <div class="filter-body" id="categoryList"></div>
+        </div>
+
+        <!-- Brand row -->
+        <div class="filter-row" id="brandRow" style="display:none">
+            <div class="filter-label">品牌</div>
+            <div class="filter-body" id="brandList"></div>
+        </div>
+
+        <!-- Specs row -->
+        <div class="filter-row" id="specsRow" style="display:none">
+            <div class="filter-label">规格</div>
+            <div class="filter-body specs-group" id="specsList" style="flex-direction:column;align-items:flex-start;gap:10px"></div>
+        </div>
+
+        <!-- Price row -->
+        <div class="filter-row">
+            <div class="filter-label">价格</div>
+            <div class="filter-body">
+                <div class="price-controls">
+                    <input id="minPrice" class="price-input" type="number" placeholder="¥ 最低" min="0">
+                    <span class="price-dash">—</span>
+                    <input id="maxPrice" class="price-input" type="number" placeholder="¥ 最高" min="0">
+                    <button class="btn-primary-sm" onclick="searchByPrice()">应用</button>
+                    <button class="btn-ghost-sm" onclick="resetPrice()">重置</button>
+                </div>
             </div>
         </div>
-    </div>
-    <div>
-        <h4 id="filters">
-        </h4>
-    </div>
-    <div style="display: none" id="categoryList">
-        <h4>类目: </h4>
-    </div>
-    <div style="display:none" id="brandList">
-        <h4>品牌: </h4>
-    </div>
-    <div id="specsList">
+    </section>
 
-    </div>
-    <div class="row">
-        <div class="form-inline">
-            <h4>价格区间：</h4>
-            <input id="minPrice" type="text" class="form-control" style="width:10%" placeholder="最低价格">
-            <input id="maxPrice" type="text" class="form-control" style="width:10%" placeholder="最高价格">
-            <button type="button" class="btn btn-default" onclick="searchByPrice()">确定</button>
+    <!-- ============== Toolbar ============== -->
+    <div class="toolbar" id="toolbar" style="display:none">
+        <div class="toolbar-info" id="toolbarInfo"></div>
+        <div class="toolbar-spacer"></div>
+
+        <div class="sort-group">
+            <button class="sort-btn active" data-order="default" onclick="setOrder(this,'default','')">综合</button>
+            <button class="sort-btn" data-order="price_asc" onclick="setOrder(this,'price','asc')">价低 ↑</button>
+            <button class="sort-btn" data-order="price_desc" onclick="setOrder(this,'price','desc')">价高 ↓</button>
+            <button class="sort-btn" data-order="new" onclick="setOrder(this,'createTime','desc')">最新</button>
+        </div>
+
+        <div class="view-switch">
+            <button class="view-btn active" id="viewGrid" onclick="setView('grid')" title="网格视图">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7" rx="1"/>
+                    <rect x="14" y="3" width="7" height="7" rx="1"/>
+                    <rect x="3" y="14" width="7" height="7" rx="1"/>
+                    <rect x="14" y="14" width="7" height="7" rx="1"/>
+                </svg>
+            </button>
+            <button class="view-btn" id="viewList" onclick="setView('list')" title="列表视图">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="8" y1="6" x2="21" y2="6"/>
+                    <line x1="8" y1="12" x2="21" y2="12"/>
+                    <line x1="8" y1="18" x2="21" y2="18"/>
+                    <circle cx="4" cy="6"  r="1"/>
+                    <circle cx="4" cy="12" r="1"/>
+                    <circle cx="4" cy="18" r="1"/>
+                </svg>
+            </button>
         </div>
     </div>
-    <div>
-        <h4>排序: </h4>
-        <a onclick="searchByOrder()">价格</a>
-    </div>
-    <div class="panel panel-default">
-        <div class="panel-heading">
-            商品列表
+
+    <!-- ============== Results ============== -->
+    <section class="goods" id="goodsGrid">
+        <div class="empty">
+            <div class="icon">🔍</div>
+            <p>在上方搜索框输入关键词，开始你的发现之旅</p>
         </div>
-        <table class="table" id="goodsList">
-            <tr><td>商品名称</td><td>商品分类</td><td>商品品牌</td><td>商品图片</td><td>商品价格</td><td>库存数量</td></tr>
-        </table>
-    </div>
+    </section>
 
-    <nav aria-label="Page navigation">
-        <ul class="pagination" id="pages">
+    <!-- Pagination -->
+    <nav class="pagination" id="pagination"></nav>
+</main>
 
-        </ul>
-    </nav>
-</div>
+<!-- ============== Toast ============== -->
+<div id="toast"></div>
 
+<script src="/js/search_goods.js"></script>
+<script>
+    /* ---------- Toast ---------- */
+    var toastTimer;
+    function showToast(msg, duration) {
+        var t = document.getElementById('toast');
+        t.textContent = msg;
+        t.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () { t.classList.remove('show'); }, duration || 2200);
+    }
+
+    /* ---------- View switch ---------- */
+    function setView(mode) {
+        var grid = document.getElementById('goodsGrid');
+        if (mode === 'list') {
+            grid.classList.add('list');
+            document.getElementById('viewList').classList.add('active');
+            document.getElementById('viewGrid').classList.remove('active');
+        } else {
+            grid.classList.remove('list');
+            document.getElementById('viewGrid').classList.add('active');
+            document.getElementById('viewList').classList.remove('active');
+        }
+        try { localStorage.setItem('botter_view', mode); } catch (e) {}
+    }
+    (function () {
+        try {
+            var v = localStorage.getItem('botter_view') || 'grid';
+            setView(v);
+        } catch (e) {}
+    })();
+
+    /* ---------- Restore last search ---------- */
+    $(function () {
+        try {
+            var lastKey = sessionStorage.getItem('botter_last_key');
+            if (lastKey) { $('#key').val(lastKey); }
+        } catch (e) {}
+    });
+</script>
 </body>
 </html>

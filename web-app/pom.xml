@@ -3,25 +3,34 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>zhuawa-shop</artifactId>
-        <groupId>com.zhuawa.shop</groupId>
+        <groupId>com.botter</groupId>
+        <artifactId>botter-shop-mic</artifactId>
         <version>1.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>web-app</artifactId>
-
-    <properties>
-        <maven.compiler.source>8</maven.compiler.source>
-        <maven.compiler.target>8</maven.compiler.target>
-    </properties>
+    <packaging>jar</packaging>
+    <name>web-app</name>
 
     <dependencies>
         <dependency>
-            <groupId>com.zhuawa.shop</groupId>
+            <groupId>com.botter</groupId>
             <artifactId>common</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
 
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <mainClass>com.botter.shop.web.WebApp</mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>

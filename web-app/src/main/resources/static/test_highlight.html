@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>高亮渲染测试 - 全字段版</title>
+<style>
+  body { font-family: -apple-system, "Segoe UI", sans-serif; background: #f5f5f7; padding: 40px; }
+  h2 { color: #1f2937; }
+  .card { background: #fff; border-radius: 14px; padding: 20px; margin-bottom: 16px;
+          box-shadow: 0 4px 16px rgba(0,0,0,.04); max-width: 720px; }
+  .case { margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px dashed #e5e7eb; }
+  .case:last-child { border-bottom: none; margin-bottom: 0; }
+  .case h4 { margin: 0 0 8px; color: #6b7280; font-size: 13px; font-weight: 500; }
+  .raw { color: #9ca3af; font-size: 12px; padding: 6px 10px; background: #f3f4f8; border-radius: 6px;
+         font-family: ui-monospace, "SF Mono", Consolas, monospace; word-break: break-all; margin-bottom: 12px; }
+  .label { display: inline-block; font-size: 12px; color: #6b7280; min-width: 80px; }
+  .g-name { font-size: 16px; font-weight: 600; color: #1f2937; line-height: 1.6; margin: 6px 0; }
+  .g-tag { display: inline-block; background: linear-gradient(135deg, #ede9fe, #fce7f3);
+           color: #7c3aed; font-size: 12px; padding: 2px 8px; border-radius: 6px; margin-right: 6px; }
+  .g-meta { font-size: 13px; color: #6b7280; margin-top: 6px; }
+  .g-meta-item { background: #f3f4f8; padding: 2px 8px; border-radius: 4px; margin-right: 6px; }
+
+  /* === 关键：高亮样式，作用域扩大到所有命中位置 === */
+  .g-name .hl,
+  .g-tag .hl,
+  .g-meta-item .hl {
+    color: #a855f7;
+    font-weight: 700;
+    background: linear-gradient(transparent 62%, rgba(168,85,247,.22) 62%);
+    padding: 0 2px;
+    border-radius: 3px;
+  }
+  .g-tag .hl { padding: 0 4px; border-radius: 4px; }
+  /* 保留后端 inline color */
+  .g-name .hl[style*="color"],
+  .g-tag .hl[style*="color"],
+  .g-meta-item .hl[style*="color"] {
+    background: linear-gradient(transparent 62%, rgba(168,85,247,.12) 62%);
+  }
+</style>
+</head>
+<body>
+<h2>🧪 命中词高亮渲染测试（全字段）</h2>
+<p>验证：name / brandName / categoryName 三处高亮都能正确渲染，不会泄漏原始 span 标签。</p>
+
+<div class="card">
+
+  <div class="case">
+    <h4>Case 1: name 字段单处命中（实体化）</h4>
+    <div class="raw">name = "&lt;span style=&#39;color:#FF0000;background-color:#FFFF00;font-weight:bold;font-size:20px;&#39;&gt;小米&lt;/span&gt;11 麒麟990;后置双摄;16GB;联通4G;5寸;绿"</div>
+    <div class="label">渲染：</div>
+    <div id="c1" class="g-name"></div>
+  </div>
+
+  <div class="case">
+    <h4>Case 2: name 多处命中</h4>
+    <div class="raw">name = "&lt;span style=&#39;color:red&#39;&gt;华为&lt;/span&gt;智慧屏 V65i 55 英寸;OLED;&lt;span style=&#39;color:red&#39;&gt;4k&lt;/span&gt;超高清"</div>
+    <div class="label">渲染：</div>
+    <div id="c2" class="g-name"></div>
+  </div>
+
+  <div class="case">
+    <h4>Case 3: 纯文本（无高亮）</h4>
+    <div class="raw">name = "普通商品名称，不带高亮"</div>
+    <div class="label">渲染：</div>
+    <div id="c3" class="g-name"></div>
+  </div>
+
+  <div class="case">
+    <h4>Case 4: 原始未转义</h4>
+    <div class="raw">name = "<span style='color:red'>手机</span>原装正品"</div>
+    <div class="label">渲染：</div>
+    <div id="c4" class="g-name"></div>
+  </div>
+
+  <div class="case">
+    <h4>Case 5: XSS 注入</h4>
+    <div class="raw">name = "&lt;script&gt;alert(1)&lt;/script&gt;&lt;span style=&#39;color:red&#39;&gt;安全词&lt;/span&gt;"</div>
+    <div class="label">渲染：</div>
+    <div id="c5" class="g-name"></div>
+  </div>
+
+  <div class="case">
+    <h4>Case 6 ⭐ 真实场景：name 命中 + brandName 命中同时存在</h4>
+    <div class="raw">
+      name = "&lt;span style=&#39;color:#FF0000;background-color:#FFFF00;font-weight:bold;&#39;&gt;小米&lt;/span&gt;11 麒麟990;后置双摄;16GB;联通4G;5寸;绿"<br>
+      brandName = "&lt;span style=&#39;color:#0066FF;background-color:#FFB6C1;font-style:italic;text-decoration:underline;&#39;&gt;小米&lt;/span&gt;"<br>
+      categoryName = "&lt;span style=&#39;color:#0066FF;background-color:#FFB6C1;font-style:italic;text-decoration:underline;&#39;&gt;手机&lt;/span&gt;"
+    </div>
+    <div class="label">g-name：</div>
+    <div id="c6_name" class="g-name"></div>
+    <div class="label">g-tag（品牌徽章）：</div>
+    <div id="c6_tag" class="g-tag"></div>
+    <div class="label">g-meta（类目/品牌）：</div>
+    <div class="g-meta">
+      <span id="c6_cat" class="g-meta-item"></span>
+      <span id="c6_brand" class="g-meta-item"></span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ====== 复刻 search_goods.js 里的核心函数 ====== */
+function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+        return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+    });
+}
+
+function renderHighlightedTitle(raw) {
+    if (!raw) return '';
+    var s = String(raw);
+
+    if (s.indexOf('&') !== -1) {
+        s = s
+            .replace(/&lt;/gi, '<')
+            .replace(/&gt;/gi, '>')
+            .replace(/&quot;/gi, '"')
+            .replace(/&#39;/g, "'")
+            .replace(/&apos;/gi, "'")
+            .replace(/&amp;/gi, '&');
+    }
+
+    if (s.indexOf('<') === -1) return escapeHtml(s);
+
+    var doc = document.implementation.createHTMLDocument('');
+    doc.body.innerHTML = s;
+
+    var whitelistTags = { SPAN: 1, B: 1, STRONG: 1, EM: 1, I: 1, U: 1, MARK: 1 };
+    var allowedStyles = {
+        'color': 1, 'font-weight': 1, 'text-decoration': 1,
+        'background': 1, 'background-color': 1, 'font-style': 1
+    };
+
+    (function walk(node) {
+        var children = Array.prototype.slice.call(node.childNodes);
+        for (var i = 0; i < children.length; i++) {
+            var c = children[i];
+            if (c.nodeType === 1) {
+                if (!whitelistTags[c.nodeName]) {
+                    var f = doc.createDocumentFragment();
+                    while (c.firstChild) f.appendChild(c.firstChild);
+                    c.parentNode.replaceChild(f, c);
+                } else {
+                    var attrs = Array.prototype.slice.call(c.attributes);
+                    for (var j = 0; j < attrs.length; j++) {
+                        var a = attrs[j];
+                        if (a.name === 'style') {
+                            var decls = a.value.split(';');
+                            var kept = [];
+                            for (var k = 0; k < decls.length; k++) {
+                                var parts = decls[k].split(':');
+                                if (parts.length !== 2) continue;
+                                var prop = parts[0].trim().toLowerCase();
+                                var val = parts[1].trim();
+                                if (!allowedStyles[prop]) continue;
+                                if (/url\s*\(|expression\s*\(|javascript:/i.test(val)) continue;
+                                kept.push(prop + ':' + val);
+                            }
+                            if (kept.length) c.setAttribute('style', kept.join(';'));
+                            else c.removeAttribute('style');
+                        } else {
+                            c.removeAttribute(a.name);
+                        }
+                    }
+                    c.classList.add('hl');
+                    walk(c);
+                }
+            } else if (c.nodeType !== 3) {
+                c.parentNode.removeChild(c);
+            }
+        }
+    })(doc.body);
+    return doc.body.innerHTML;
+}
+
+var cases = [
+    { id: 'c1', raw: "<span style='color:#FF0000;background-color:#FFFF00;font-weight:bold;font-size:20px;'>小米</span>11 麒麟990;后置双摄;16GB;联通4G;5寸;绿" },
+    { id: 'c2', raw: "<span style='color:red'>华为</span>智慧屏 V65i 55 英寸;OLED;<span style='color:red'>4k</span>超高清" },
+    { id: 'c3', raw: "普通商品名称，不带高亮" },
+    { id: 'c4', raw: "<span style='color:red'>手机</span>原装正品" },
+    { id: 'c5', raw: "<script>alert(1)</script><span style='color:red'>安全词</span>" }
+];
+cases.forEach(function (c) { document.getElementById(c.id).innerHTML = renderHighlightedTitle(c.raw); });
+
+/* Case 6: 多字段同时命中（你截图的真实场景） */
+document.getElementById('c6_name').innerHTML = renderHighlightedTitle(
+    "<span style='color:#FF0000;background-color:#FFFF00;font-weight:bold;'>小米</span>11 麒麟990;后置双摄;16GB;联通4G;5寸;绿"
+);
+document.getElementById('c6_tag').innerHTML = renderHighlightedTitle(
+    "<span style='color:#0066FF;background-color:#FFB6C1;font-style:italic;text-decoration:underline;'>小米</span>"
+);
+document.getElementById('c6_cat').innerHTML = renderHighlightedTitle(
+    "<span style='color:#0066FF;background-color:#FFB6C1;font-style:italic;text-decoration:underline;'>手机</span>"
+);
+document.getElementById('c6_brand').innerHTML = renderHighlightedTitle(
+    "<span style='color:#0066FF;background-color:#FFB6C1;font-style:italic;text-decoration:underline;'>小米</span>"
+);
+</script>
+</body>
+</html>

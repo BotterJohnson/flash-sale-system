@@ -3,15 +3,15 @@ server:
 spring:
   application:
     name: web-app
-  resources:
-    static-locations: classpath:/static/
-    chain:
-      enabled: true
-      html-application-cache: false
+  web:
+    resources:
+      static-locations: classpath:/static/
 eureka:
   client:
     service-url:
       defaultZone: http://127.0.0.1:8761/eureka
+  instance:
+    status-page-url: http://localhost:18004/search_goods.html
 feign:
   hystrix:
     enabled: true

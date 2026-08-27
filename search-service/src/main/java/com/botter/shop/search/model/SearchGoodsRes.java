@@ -1,4 +1,4 @@
-package com.zhuawa.shop.search.model;
+package com.botter.shop.search.model;
 
 import java.util.*;
 
