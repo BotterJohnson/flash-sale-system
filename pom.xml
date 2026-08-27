@@ -17,6 +17,7 @@
     <module>gateway-service</module>
     <module>search-service</module>
     <module>user-service</module>
+    <module>web-app</module>
   </modules>
 
     <properties>

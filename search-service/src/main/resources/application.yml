@@ -2,7 +2,7 @@ server:
   port: 18003
 spring:
   config:
-    import: classpath:swagger-common.yml
+    import: optional:classpath:swagger-common.yml
   application:
     name: search-service
   main:

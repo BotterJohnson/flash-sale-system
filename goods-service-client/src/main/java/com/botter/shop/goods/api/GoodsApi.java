@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
-@FeignClient(value = "goods", path = "/goods")
+@FeignClient(name = "goods-service", path = "/goods")
 public interface GoodsApi {
     @GetMapping("/getAllValidGoods")
     Result<List<GoodsDTO>> getAllValidGoods();
