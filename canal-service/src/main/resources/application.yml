@@ -1,19 +1,12 @@
 server:
-  port: 18003
+  port: 18005
 spring:
   config:
     import: optional:classpath:swagger-common.yml
   application:
-    name: search-service
+    name: canal
   main:
     allow-bean-definition-overriding: true
-  data:
-    elasticsearch:
-      repositories:
-        enabled: true
-  elasticsearch:
-    uris: http://127.0.0.1:9200
-    
   rabbitmq:
     host: localhost
     port: 5672
@@ -31,21 +24,34 @@ spring:
         auto-startup: true
         #消费失败，自动重新入队
         default-requeue-rejected: true
-    #启用发送重试
+        #启用发送重试
     template:
       retry:
         enabled: true
         initial-interval: 1000
         max-attempts: 3
         max-interval: 10000
-        multiplier: 1.0
-
+        multiplier: 1.0  
+        
+canal:
+  client:
+    host: 127.0.0.1
+    port: 11111
+    # 实例名，必须与 canal 服务端 conf/ 目录下的实例目录名一致
+    destination: example
+    # 仅当 canal 服务端 (canal.properties) 配置了 canal.user/canal.pass 鉴权时才需要填
+    username: ''
+    password: ''
+    # 订阅过滤规则（正则）：goods\..* 表示监听 goods 库所有表；只监听单表则写 goods\.goods
+    # 注意：必须用单引号包裹，\ 在单引号内是字面量，正好是 canal 需要的正则转义
+    subscribe-filter: 'goods\..*'
+    batch-size: 100
 eureka:
   client:
     service-url:
       defaultZone: http://127.0.0.1:8761/eureka
   instance:
-    status-page-url: http://localhost:18003/doc.html
+    status-page-url: http://localhost:18005/doc.html
 feign:
   hystrix:
     enabled: true

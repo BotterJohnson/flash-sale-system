@@ -64,6 +64,7 @@ public class GoodsService {
     public void ExportMysqlToEs(){
 
         try{
+            boolean deleted = elasticsearchRestTemplate.indexOps(GoodsEsInfo.class).delete();
             Result<List<GoodsDTO>> allValidGoods = goodsApi.getAllValidGoods();
             if (allValidGoods == null || allValidGoods.getCode() != 200
                     || allValidGoods.getData() == null) {
@@ -80,7 +81,7 @@ public class GoodsService {
             if (e instanceof GlobalException globalException) {
                 throw globalException;
             }
-            throw new GlobalException(ResultMsgEnum.ES_SERVICE_ERROR);
+            throw new GlobalException(ResultMsgEnum.ES_SERVICE_ERROR.fillArgs(e.getMessage()));
         }
 
     }
