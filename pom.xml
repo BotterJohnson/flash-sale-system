@@ -18,6 +18,8 @@
     <module>search-service</module>
     <module>user-service</module>
     <module>web-app</module>
+    <module>order-service</module>
+    <module>canal-service</module>
   </modules>
 
     <properties>

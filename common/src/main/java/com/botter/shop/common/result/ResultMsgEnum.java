@@ -68,7 +68,7 @@ public enum ResultMsgEnum {
     ROLE_NOT_EXIST(500701, "角色不存在"),
 
 
-    ES_SERVICE_ERROR(5008001,"ES错误");
+    ES_SERVICE_ERROR(5008001,"ES错误,错误信息:%s");
 
 
     private int code;
