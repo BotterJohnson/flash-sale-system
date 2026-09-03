@@ -76,29 +76,18 @@ $(function(){
 	getCartList();
 });
 function getUserInfo(){
-    $.ajax({
-        url: "http://localhost:8081/user/user/info",
-        type: "GET",
-        xhrFields: {
-            withCredentials: true    // 要在这里设置上传cookie
-        },
-        crossDomain: true,
-        success:function(data){
-            layer.closeAll();
-            if(data.code == 0){
-                $("#userInfo").text("欢迎您, " + data.data.nickname);
-            }else{
-                layer.msg(data.msg);
-            }
-        },
-        error:function(){
-            layer.closeAll();
+    g_getUserInfo(function (err, user) {
+        layer.closeAll();
+        if (user) {
+            $("#userInfo").text("欢迎您, " + user.nickname);
+        } else {
+            layer.msg(err || "未登录");
         }
-	});
+    });
 }
 function getCartList(){
     $.ajax({
-        url: "http://localhost:8081/order/cart/list",
+        url: g_gatewayBase() + "/order/cart/list",
         type: "GET",
         xhrFields: {
             withCredentials: true    // 要在这里设置上传cookie
@@ -106,7 +95,7 @@ function getCartList(){
         crossDomain: true,
         success:function(data){
             layer.closeAll();
-            if(data.code == 0){
+            if(data.code == 200){
                 render(data.data);
             }else{
                 layer.msg(data.msg);
@@ -118,17 +107,58 @@ function getCartList(){
 	});
 }
 function render(cartList) {
+    // 先清掉旧数据行，只保留表头，避免刷新时重复追加
+    $("#cartList tr:gt(0)").remove();
     for(var i in cartList) {
         var trDiv = "<tr>";
         trDiv += '<td><input type="checkbox" value="'+cartList[i].itemId+'"/></td>'
         trDiv += "<td>" + cartList[i].title + "</td>";
         trDiv += '<td><img src="'+cartList[i].image+'" width="100" height="100" /></td>';
         trDiv += "<td>" + cartList[i].priceNow/100 + "</td>";
-        trDiv += "<td>" + cartList[i].count + "</td>";
+        // 数量列：减一 / 数量 / 加一
+        trDiv += '<td>';
+        trDiv += '<button class="btn btn-default btn-xs" onclick="decrCount(\'' + cartList[i].goodsId + '\')">−</button>';
+        trDiv += ' <strong>' + cartList[i].count + '</strong> ';
+        trDiv += '<button class="btn btn-default btn-xs" onclick="incrCount(\'' + cartList[i].goodsId + '\')">+</button>';
+        trDiv += '</td>';
         trDiv += "<td>" + cartList[i].totalPriceNow/100 + "</td>";
         trDiv = trDiv + "</tr>";
         $('#cartList').append(trDiv);
     }
+}
+
+// 购物车数量 -1，减到 0 后端会直接移除该条目
+function decrCount(goodsId){
+    if (confirm("确定减少一件吗？数量减到 0 会将该商品移出购物车。")) {
+        changeCount("decr", goodsId);
+    }
+}
+
+// 购物车数量 +1
+function incrCount(goodsId){
+    changeCount("incr", goodsId);
+}
+
+// 调用后端加减接口后重新拉取购物车列表，保证数据一致
+function changeCount(action, goodsId){
+    $.ajax({
+        url: g_gatewayBase() + "/order/cart/" + action + "?goodsId=" + goodsId,
+        type: "GET",
+        xhrFields: {
+            withCredentials: true    // 要在这里设置上传cookie
+        },
+        crossDomain: true,
+        success:function(data){
+            if(data.code == 200){
+                getCartList();
+            }else{
+                layer.msg(data.msg);
+            }
+        },
+        error:function(){
+            layer.msg("客户端请求有误");
+        }
+    });
 }
 function genOrder(){
     var cartItemIds = [];
@@ -146,7 +176,7 @@ function genOrder(){
     param['cartItemIds'] = cartItemIds;
     console.log(param);
     $.ajax({
-            url: "http://localhost:8081/order/order/genOrder",
+            url: g_gatewayBase() + "/order/order/genOrder",
             type:"POST",
             contentType: "application/json",
             dataType:"json",
@@ -156,7 +186,7 @@ function genOrder(){
             },
             crossDomain: true,
             success:function(data){
-                if(data.code == 0){
+                if(data.code == 200){
                     console.log(data.data);
                     //TODO 关闭model ， 跳转到订单详情页
                     location.href="order_detail.html?orderId="+data.data.id;

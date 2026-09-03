@@ -32,7 +32,7 @@ function getAllCategory(parentId, selectorId) {
         url:"/category/getCategoriesByParentId?parentId=" + parentId,
         type:"GET",
         success:function(data){
-            if(data.code == 0){
+            if(data.code == 200){
                 render(data.data, selectorId);
             }else{
                 layer.msg(data.msg);
@@ -49,6 +49,5 @@ function render(data, selectId) {
         $(selectId).append('<option value="'+data[i].id+'">'+data[i].name+'</option>');
     }
 }
-
 
 

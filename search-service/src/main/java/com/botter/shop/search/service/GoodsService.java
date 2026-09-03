@@ -17,7 +17,7 @@ import com.botter.shop.search.model.SearchGoodsParam;
 import com.botter.shop.search.model.SearchGoodsRes;
 import com.botter.shop.search.repository.GoodsEsRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +41,8 @@ import co.elastic.clients.elasticsearch._types.aggregations.StringTermsBucket;
 import org.springframework.data.elasticsearch.core.query.HighlightQuery;
 import org.springframework.data.elasticsearch.core.query.highlight.Highlight;
 import org.springframework.data.elasticsearch.core.query.highlight.HighlightField;
+import org.springframework.util.StringUtils;
+
 /**
  * @ProjectName botter-shop-mic
  * @Author Botter
@@ -64,7 +66,13 @@ public class GoodsService {
     public void ExportMysqlToEs(){
 
         try{
-            boolean deleted = elasticsearchRestTemplate.indexOps(GoodsEsInfo.class).delete();
+            var indexOps = elasticsearchRestTemplate.indexOps(GoodsEsInfo.class);
+            if (indexOps.exists()) {
+                indexOps.delete();
+            }
+            indexOps.create();
+            indexOps.putMapping(indexOps.createMapping(GoodsEsInfo.class));
+
             Result<List<GoodsDTO>> allValidGoods = goodsApi.getAllValidGoods();
             if (allValidGoods == null || allValidGoods.getCode() != 200
                     || allValidGoods.getData() == null) {
@@ -111,7 +119,7 @@ public class GoodsService {
         Aggregation brandNameAgg = Aggregation.of(a -> a.terms(t -> t.field("brandName").size(100)));
 
         //规格聚合
-        Aggregation specAgg =  Aggregation.of(a -> a.terms(t -> t.field("specJson").size(10000)));
+        Aggregation specAgg =  Aggregation.of(a -> a.terms(t -> t.field("specsJson").size(10000)));
 
         //查询builder
         var query = NativeQuery.builder()
@@ -145,14 +153,14 @@ public class GoodsService {
         }
         //TODO 点击一个类目， 品牌， 规格之后就不需要再显示相应的列表了
         // 分类过滤
-        if (StringUtils.isNotEmpty(params.getCategory())) {
+        if (StringUtils.hasText(params.getCategory()) && !"null".equalsIgnoreCase(params.getCategory())) {
             res.setCategory(params.getCategory());
             boolQueryBuilder.filter(f->f.term(t -> t.field("categoryName.keyword")
                     .value(params.getCategory())));
         }
 
         // 品牌过滤
-        if (StringUtils.isNotEmpty(params.getBrand())) {
+        if (StringUtils.hasText(params.getBrand()) && !"null".equalsIgnoreCase(params.getBrand())) {
             res.setBrand(params.getBrand());
             boolQueryBuilder.filter(f->f.term(t ->
                     t.field("brandName").value(params.getBrand())));
@@ -163,7 +171,7 @@ public class GoodsService {
             res.setSpecsValueMap(params.getSpecsValueMap());
             for (Map.Entry<String, String> entry : params.getSpecsValueMap().entrySet() ) {
                 boolQueryBuilder.filter(f->f.term(t ->
-                        t.field("specMap."+entry.getKey()+".keyword").value(entry.getValue())));
+                        t.field("specsMap."+entry.getKey()+".keyword").value(entry.getValue())));
             }
         }
 
@@ -180,13 +188,10 @@ public class GoodsService {
         PageRequest pageRequest = PageRequest.of(page - 1, size);
         query.withPageable(pageRequest);
         // 排序
-        if (org.springframework.util.StringUtils.hasText(params.getOrderField()) && org.springframework.util.StringUtils.hasText(params.getOrderType())) {
-            String orderTypeRaw = params.getOrderType();
-            String orderTypeCap = Character.toUpperCase(orderTypeRaw.charAt(0)) + orderTypeRaw.substring(1).toLowerCase();
-            SortOrder order = SortOrder.valueOf(orderTypeCap);
-            query.withSort(Sort.by(order == SortOrder.Asc ? Sort.Direction.ASC : Sort.Direction.DESC, params.getOrderField()));
-        }else{
-            query.withSort(Sort.by(Sort.Direction.DESC, "_score"));
+        if (StringUtils.hasText(params.getOrderField()) && StringUtils.hasText(params.getOrderType())) {
+            // 安全转换排序方向（支持 "asc"/"desc"/"ASC"/"DESC"）
+            Sort.Direction direction = Sort.Direction.fromString(params.getOrderType());
+            query.withSort(Sort.by(direction, params.getOrderField()));
         }
 
 
@@ -247,7 +252,7 @@ public class GoodsService {
         if (resSpecAgg != null && resSpecAgg.isSterms()) {
             for (StringTermsBucket bucket : resSpecAgg.sterms().buckets().array()) {
                 String jsonStr = bucket.key().stringValue();
-                if (StringUtils.isBlank(jsonStr)) continue;
+                if (!StringUtils.hasText(jsonStr)) continue;
                 try {
                     JSONObject specsJson = JSONObject.parseObject(jsonStr);
                     for (Map.Entry<String, Object> specsEntry : specsJson.entrySet()) {

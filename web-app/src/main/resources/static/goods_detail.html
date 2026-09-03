@@ -80,14 +80,14 @@ $(function(){
 function getGoodsDetail(){
 	var goodsId = g_getQueryString("goodsId");
 	$.ajax({
-		url:"http://localhost:8081/goods/goods/get/"+goodsId,
+		url:g_gatewayBase() + "/goods/goods/get/" + goodsId,
 		type:"GET",
 		xhrFields: {
             withCredentials: true    // 要在这里设置上传cookie
         },
         crossDomain: true,
 		success:function(data){
-			if(data.code == 0){
+			if(data.code == 200){
 				render(data.data);
 			}else{
 				layer.msg(data.msg);
@@ -100,25 +100,14 @@ function getGoodsDetail(){
 }
 
 function getUserInfo(){
-    $.ajax({
-        url: "http://localhost:8081/user/user/info",
-        type: "GET",
-        xhrFields: {
-            withCredentials: true    // 要在这里设置上传cookie
-        },
-        crossDomain: true,
-        success:function(data){
-            layer.closeAll();
-            if(data.code == 0){
-                $("#userInfo").text("欢迎您, " + data.data.nickname);
-            }else{
-                layer.msg(data.msg);
-            }
-        },
-        error:function(){
-            layer.closeAll();
+    g_getUserInfo(function (err, user) {
+        layer.closeAll();
+        if (user) {
+            $("#userInfo").text("欢迎您, " + user.nickname);
+        } else {
+            layer.msg(err || "未登录");
         }
-	});
+    });
 }
 
 function render(goods){
@@ -134,7 +123,7 @@ function render(goods){
 function buy(){
 	g_showLoading();
 	$.ajax({
-		url:"http://localhost:8081/order/order/genOrder",
+		url:g_gatewayBase() + "/order/order/genOrder",
 		type:"POST",
 		data:{
 			goodsId: g_getQueryString("goodsId"),
@@ -142,9 +131,9 @@ function buy(){
 		xhrFields: {
             withCredentials: true    // 要在这里设置上传cookie
         },
-        crossDomain: true,
+		crossDomain: true,
 		success:function(data){
-			if(data.code == 0){
+			if(data.code == 200){
 				window.location.href="/order_detail.html?orderId="+data.data.id;
 			}else{
 				layer.msg(data.msg);
@@ -160,7 +149,7 @@ function buy(){
 function addToCart(){
 	var goodsId = g_getQueryString("goodsId");
 	$.ajax({
-        url: "http://localhost:8081/order/cart/incr?goodsId="+goodsId,
+        url: g_gatewayBase() + "/order/cart/incr?goodsId=" + goodsId,
         type: "GET",
         xhrFields: {
             withCredentials: true    // 要在这里设置上传cookie
@@ -168,7 +157,7 @@ function addToCart(){
         crossDomain: true,
         success:function(data){
             layer.closeAll();
-            if(data.code == 0){
+            if(data.code == 200){
                 layer.msg("加购成功!");
             }else{
                 layer.msg(data.msg);

@@ -37,7 +37,7 @@ public class MqReceiver {
         var canalMessage = BeanUtils.stringToBean(msg, CanalMessage.class);
         
         if (canalMessage.getOperationType() == OperationType.DELETE) {
-            goodsEsRepository.deleteById(canalMessage.getPrimaryKey());
+            goodsEsRepository.deleteById(String.valueOf(canalMessage.getPrimaryKey()));
         } else {
             var goodsEsInfo = new GoodsEsInfo(goodsApi.get(canalMessage.getPrimaryKey()).getData());
             log.info(goodsEsInfo.toString());

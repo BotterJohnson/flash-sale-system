@@ -14,12 +14,12 @@
     <module>common</module>
     <module>goods-service</module>
     <module>goods-service-client</module>
-    <module>gateway-service</module>
     <module>search-service</module>
     <module>user-service</module>
     <module>web-app</module>
     <module>order-service</module>
     <module>canal-service</module>
+    <module>geteway-service</module>
   </modules>
 
     <properties>

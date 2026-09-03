@@ -488,12 +488,32 @@ function showEmpty(icon, msg) {
 function addToCart(btn) {
     if (btn.disabled) return;
     var card = btn.closest('.g-card');
-    var id   = card ? card.dataset.id : '';
+    var goodsId = card ? card.dataset.id : '';
+    if (!goodsId) { layer.msg("商品ID缺失"); return; }
     btn.style.transform = 'scale(1.2) rotate(0deg)';
     setTimeout(function(){ btn.style.transform = ''; }, 220);
-    showToast('✓ 已加入愿望清单 (ID: ' + (id || '?') + ')');
-    var badge = document.querySelector('.nav-link[title="购物车"] .badge');
-    if (badge) badge.textContent = (parseInt(badge.textContent || '0', 10) + 1) + '';
+    $.ajax({
+        url: g_gatewayBase() + "/order/cart/incr?goodsId=" + goodsId,
+        type: "GET",
+        xhrFields: {
+            withCredentials: true    // 要在这里设置上传cookie
+        },
+        crossDomain: true,
+        success: function (data) {
+            layer.closeAll();
+            if (data.code == 200) {
+                layer.msg("加购成功!");
+                // 角标以 /order/cart/size 返回的真实数据为准，不做本地 +1，
+                // 避免与购物车列表（历史条目、重复加购）对不上
+                g_refreshCartBadge();
+            } else {
+                layer.msg(data.msg);
+            }
+        },
+        error: function () {
+            layer.closeAll();
+        }
+    });
 }
 
 /* =====================================================

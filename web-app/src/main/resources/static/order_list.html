@@ -1,0 +1,123 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>我的订单</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <!-- jquery -->
+    <script type="text/javascript" src="/js/jquery.min.js"></script>
+    <!-- bootstrap -->
+    <link rel="stylesheet" type="text/css" href="/bootstrap/css/bootstrap.min.css" />
+    <script type="text/javascript" src="/bootstrap/js/bootstrap.min.js"></script>
+    <!-- layer -->
+    <script type="text/javascript" src="/layer/layer.js"></script>
+    <!-- common.js -->
+    <script type="text/javascript" src="/js/common.js"></script>
+    <style>
+        .order-status-0 { color: #d9534f; } /* 待付款 */
+        .order-status-1 { color: #f0ad4e; } /* 待发货 */
+        .order-status-2 { color: #5bc0de; } /* 已发货 */
+        .order-status-3 { color: #5cb85c; } /* 已完成 */
+    </style>
+</head>
+<body>
+
+<div class="panel panel-default">
+    <div class="panel-heading">
+        我的订单
+        <div align="right">
+            <a href="/search_goods.html">继续购物</a>
+            <span id="userInfo" style="margin-left: 15px;"></span>
+        </div>
+    </div>
+    <div id="orderList">
+        <p id="emptyTip" style="text-align:center; padding: 30px; display: none;">还没有订单，去 <a href="/search_goods.html">逛逛</a> 吧~</p>
+    </div>
+</div>
+
+</body>
+<script>
+var STATUS_TEXT = { 0: "待付款", 1: "待发货", 2: "已发货", 3: "已完成" };
+var PAY_TEXT = { 0: "在线支付", 1: "货到付款" };
+
+$(function(){
+    getUserInfo();
+    getOrderList();
+});
+
+function getUserInfo(){
+    g_getUserInfo(function (err, user) {
+        if (user) {
+            $("#userInfo").text("欢迎您, " + user.nickname);
+        } else {
+            layer.msg(err || "未登录");
+        }
+    });
+}
+
+// 查询当前用户的所有订单（含订单子项）
+function getOrderList(){
+    $.ajax({
+        url: g_gatewayBase() + "/order/order/list",
+        type: "GET",
+        xhrFields: {
+            withCredentials: true    // 要在这里设置上传cookie
+        },
+        crossDomain: true,
+        success:function(data){
+            if(data.code == 200){
+                render(data.data);
+            }else{
+                layer.msg(data.msg);
+            }
+        },
+        error:function(){
+            layer.msg("客户端请求有误");
+        }
+    });
+}
+
+function render(orderList) {
+    if (!orderList || orderList.length === 0) {
+        $("#emptyTip").show();
+        return;
+    }
+    for (var i in orderList) {
+        var order = orderList[i];
+        var orderTime = (order.createTime || "").replace("T", " ").substring(0, 19);
+        var statusText = STATUS_TEXT[order.status] || ("状态" + order.status);
+        var payText = PAY_TEXT[order.payType] || (order.payType + "");
+
+        var html = '<div class="panel panel-default" style="margin: 15px;">';
+        // 订单头：订单号、状态、下单时间
+        html += '<div class="panel-heading">';
+        html += '订单号：<strong>' + order.id + '</strong>';
+        html += '<span class="order-status-' + order.status + '" style="margin-left: 15px;">' + statusText + '</span>';
+        html += '<span style="margin-left: 15px; color: #999;">' + orderTime + '</span>';
+        html += '</div>';
+        // 订单子项表格
+        html += '<table class="table">';
+        html += '<tr><td>商品图片</td><td>商品名称</td><td>单价</td><td>数量</td><td>小计</td></tr>';
+        var items = order.orderItems || [];
+        for (var j in items) {
+            var item = items[j];
+            html += '<tr>';
+            html += '<td><img src="' + item.goodsImage + '" width="80" height="80" /></td>';
+            html += '<td>' + item.goodsName + '</td>';
+            html += '<td>¥' + (item.price / 100) + '</td>';
+            html += '<td>x' + item.count + '</td>';
+            html += '<td>¥' + (item.actualPrice / 100) + '</td>';
+            html += '</tr>';
+        }
+        html += '</table>';
+        // 订单尾：支付方式、总价、实付
+        html += '<div class="panel-footer" style="text-align: right;">';
+        html += '<span style="margin-right: 15px; color: #999;">' + payText + ' / 收货：' + order.receiveAddress + '</span>';
+        html += '总价 <del>¥' + (order.totalPrice / 100) + '</del> ';
+        html += '实付 <strong style="color: #d9534f;">¥' + (order.actualPrice / 100) + '</strong>';
+        html += '</div>';
+        html += '</div>';
+        $('#orderList').append(html);
+    }
+}
+</script>
+</html>

@@ -6,12 +6,15 @@ spring:
   web:
     resources:
       static-locations: classpath:/static/
+      cache:
+        cachecontrol:
+          no-store: true
 eureka:
   client:
     service-url:
       defaultZone: http://127.0.0.1:8761/eureka
   instance:
-    status-page-url: http://localhost:18004/search_goods.html
+    status-page-url: http://localhost:18004/login.html
 feign:
   hystrix:
     enabled: true

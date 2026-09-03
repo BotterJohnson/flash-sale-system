@@ -9,6 +9,8 @@
     <script src="/js/jquery.min.js"></script>
     <script src="/js/md5.min.js"></script>
     <script src="/js/common.js"></script>
+    <!-- layer -->
+    <script type="text/javascript" src="/layer/layer.js"></script>
 
     <style>
         /* =========================================================
@@ -718,11 +720,13 @@
         </div>
 
         <div class="navbar-right">
-            <a class="nav-link" href="#" title="我的订单">订单</a>
-            <a class="nav-link" href="#" title="购物车">
-                购物车<span class="badge">0</span>
+            <a class="nav-link" href="/order_list.html" title="我的订单">订单</a>
+            <a class="nav-link" href="/cart_list.html" title="购物车">
+                购物车<span class="badge" id="cartBadge">0</span>
             </a>
-            <a class="nav-link" href="/login.html">登录</a>
+            <span id="userNav" style="display: flex; align-items: center; gap: 8px;">
+                <a class="nav-link" id="loginLink" href="/login.html">登录</a>
+            </span>
         </div>
     </div>
 </nav>
@@ -865,10 +869,18 @@
 
     /* ---------- Restore last search ---------- */
     $(function () {
+        g_initUserNav();
+        // 页面加载即从后端同步购物车角标，修复"角标与购物车真实数量对不上"的问题
+        g_refreshCartBadge();
         try {
             var lastKey = sessionStorage.getItem('botter_last_key');
             if (lastKey) { $('#key').val(lastKey); }
         } catch (e) {}
+    });
+
+    /* 浏览器"后退"走 bfcache 时 ready 不会重新执行，这里兜底刷新角标 */
+    window.addEventListener('pageshow', function (e) {
+        if (e.persisted) { g_refreshCartBadge(); }
     });
 </script>
 </body>

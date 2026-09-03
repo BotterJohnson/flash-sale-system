@@ -49,3 +49,8 @@ eureka:
 feign:
   hystrix:
     enabled: true
+    
+logging:
+  level:
+    co.elastic.clients: DEBUG
+    org.springframework.data.elasticsearch: DEBUG
