@@ -43,10 +43,11 @@ public enum ResultMsgEnum {
     USER_REGISTER_FAIL(500308, "用户注册失败"),
     CODE_ERROR(500309, "验证码错误"),
     CODE_EXPIRED(500310, "验证码已过期"),
+    MOBILE_EXIST(500311, "该手机号已注册"),
 
     // ==================== 订单模块异常 5004xx ====================
     ORDER_CREATE_FAIL(500400, "创建订单失败"),
-    ORDER_NOT_EXIST(500401, "订单不存在"),
+    ORDER_NOT_EXIST(500401, "订单不存在,%s"),
     ORDER_STATUS_ERROR(500402, "订单状态异常"),
     ORDER_PAY_TIMEOUT(500403, "订单支付超时"),
     ORDER_CANCEL_FAIL(500404, "订单取消失败"),

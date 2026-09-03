@@ -9,5 +9,5 @@ import org.springframework.data.elasticsearch.repository.ElasticsearchRepository
  * @Create 2026-08-25 21:57
  * @Description 描述信息
  */
-public interface GoodsEsRepository extends ElasticsearchRepository<GoodsEsInfo, Long> {
+public interface GoodsEsRepository extends ElasticsearchRepository<GoodsEsInfo, String> {
 }

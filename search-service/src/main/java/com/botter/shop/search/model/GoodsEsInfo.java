@@ -17,7 +17,7 @@ import java.util.Map;
 @Mapping(mappingPath = "mapping/goods_es_info.json")
 public class GoodsEsInfo {
     @Id
-    private Long id;
+    private String id;
 
     // @Field 字段的映射 , 注解无效，需要json
     // analyzer 指定索引的是用的分词分词器   searchAnalyzer :搜索的时候使用的分词器
@@ -59,7 +59,7 @@ public class GoodsEsInfo {
     }
 
     public GoodsEsInfo(Goods goods) {
-        this.id = goods.getId();
+        this.id = String.valueOf(goods.getId());
         this.name = goods.getName();
         this.fullName = goods.getName() + " " + goods.getCategoryName() + " " + goods.getBrandName();
         this.price = goods.getPrice();
@@ -77,7 +77,7 @@ public class GoodsEsInfo {
         this.specsMap = JSON.parseObject(goods.getSpecsJson(), Map.class);
     }
     public GoodsEsInfo(GoodsDTO goods) {
-        this.id = goods.id();
+        this.id = String.valueOf(goods.id());
         this.name = goods.name();
         this.fullName = goods.name() + " " + goods.categoryName() + " " + goods.brandName();
         this.price = goods.price();
@@ -95,11 +95,11 @@ public class GoodsEsInfo {
         this.specsMap = JSON.parseObject(goods.specsJson(), Map.class);
     }
 
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 

@@ -6,6 +6,8 @@ import com.botter.shop.goods.dto.GoodsDTO;
 import com.botter.shop.goods.mapper.GoodsMapper;
 import com.botter.shop.goods.model.Goods;
 import com.botter.shop.goods.repository.GoodsRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +21,7 @@ import java.util.List;
  */
 @Service
 public class GoodsService {
+    private static final Logger log = LoggerFactory.getLogger(GoodsService.class);
     @Autowired
     private GoodsRepository goodsRepository;
 
@@ -41,5 +44,6 @@ public class GoodsService {
         if (goodsRepository.decrStock(goodsId, count) <= 0) {
             throw new GlobalException(ResultMsgEnum.GOODS_STOCK_SHORTAGE);
         }
+        log.info("decrStock goodsId={}, count={} , success", goodsId, count);
     }
 }

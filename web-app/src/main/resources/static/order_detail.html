@@ -56,15 +56,19 @@
 
   function getOrderDetail(){
     var orderId = g_getQueryString("orderId");
+    if (!orderId) {
+      layer.msg("缺少订单id，无法查询订单");
+      return;
+    }
     $.ajax({
-      url:"http://localhost:8081/order/order/getOrder/"+orderId,
+      url:g_gatewayBase() + "/order/order/getOrder/" + orderId,
       type:"GET",
       xhrFields: {
         withCredentials: true    // 要在这里设置上传cookie
       },
       crossDomain: true,
       success:function(data){
-        if(data.code == 0){
+        if(data.code == 200){
           render(data.data);
         }else{
           layer.msg(data.msg);
@@ -77,23 +81,12 @@
   }
 
   function getUserInfo(){
-    $.ajax({
-      url: "http://localhost:8081/user/user/info",
-      type: "GET",
-      xhrFields: {
-        withCredentials: true    // 要在这里设置上传cookie
-      },
-      crossDomain: true,
-      success:function(data){
-        layer.closeAll();
-        if(data.code == 0){
-          $("#userInfo").text("欢迎您, " + data.data.nickname);
-        }else{
-          layer.msg(data.msg);
-        }
-      },
-      error:function(){
-        layer.closeAll();
+    g_getUserInfo(function (err, user) {
+      layer.closeAll();
+      if (user) {
+        $("#userInfo").text("欢迎您, " + user.nickname);
+      } else {
+        layer.msg(err || "未登录");
       }
     });
   }

@@ -1,0 +1,32 @@
+server:
+  port: 18006
+
+spring:
+  config:
+    import: classpath:swagger-common.yml
+  application:
+    name: user-service
+  datasource:
+    url: jdbc:mysql://localhost:33061/user?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+  data:
+    redis:
+      host: localhost
+      password: Zheng#123
+      port: 6379
+      database: 7
+  jpa:
+    show-sql: false
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://127.0.0.1:8761/eureka
+  instance:
+    status-page-url: http://localhost:18006/doc.html

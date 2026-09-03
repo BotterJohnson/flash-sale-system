@@ -21,7 +21,7 @@ import java.util.List;
  * @Description 描述信息
  */
 
-@ControllerAdvice(basePackages = "com.botter.shop.*")
+@ControllerAdvice(basePackages = "com.botter.shop")
 @ResponseBody
 public class GlobalExceptionHandler {
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
