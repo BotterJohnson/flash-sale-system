@@ -63,8 +63,8 @@ public class UserService {
         user.setLoginCount(user.getLoginCount() == null ? 1L : user.getLoginCount() + 1);
         userDao.save(user);
 
-        // sa-token 登录，有效期 3600 秒
-        StpUtil.login(user.getId(), 3600L);
+        // sa-token 登录，有效期 1 月
+        StpUtil.login(user.getId(), 60*60*24*30L);
 
         // 登录成功后缓存用户信息（三种 Session），供跨服务鉴权/取用户
         cacheUserInfo(user);

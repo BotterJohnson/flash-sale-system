@@ -20,6 +20,7 @@
     <module>order-service</module>
     <module>canal-service</module>
     <module>geteway-service</module>
+    <module>seckill-service</module>
   </modules>
 
     <properties>

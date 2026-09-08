@@ -28,11 +28,16 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(value = Exception.class)
     public Result<String> exceptionHandler(HttpServletRequest request, Exception e) {
-        logger.error("exceptionHandler error: ", e);
+        // 业务异常是预期内的"拒绝"（已抢过/售罄/未开始等），压测时每个被拒请求都会走到这。
+        // 千万别在这里打 error+堆栈：控制台输出是全局同步锁，会把整个服务的吞吐摁死。
         if (e instanceof GlobalException) {
             GlobalException ex = (GlobalException) e;
+            logger.debug("业务拒绝 {}: {}", request.getRequestURI(), ex.getCm().getMsg());
             return Result.error(ex.getCm());
-        } else if (e instanceof BindException) {
+        }
+        // 意外异常才值得打完整堆栈
+        logger.error("exceptionHandler error: ", e);
+        if (e instanceof BindException) {
             BindException ex = (BindException) e;
             List<ObjectError> errors = ex.getAllErrors();
             ObjectError error = errors.get(0);
