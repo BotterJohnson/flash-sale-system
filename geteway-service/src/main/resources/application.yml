@@ -42,6 +42,19 @@ spring:
               filters:
                 - StripPrefix=1
 
+            # 秒杀：不做 StripPrefix，/seckill/** 原样转发到 18007
+            - id: botter-shop-seckill-route
+              uri: http://localhost:18007
+              predicates:
+                - Path=/seckill/**
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    key-resolver: "#{@ipKeyResolver}"
+                    # 秒杀接口放宽松一些：每秒补充 20 个令牌，桶容量 50
+                    redis-rate-limiter.replenishRate: 20
+                    redis-rate-limiter.burstCapacity: 50
+
           # Spring Cloud Gateway 4.x 新键：spring.cloud.gateway.server.webflux.globalcors
           globalcors:
             cors-configurations:

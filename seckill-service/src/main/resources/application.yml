@@ -1,0 +1,69 @@
+server:
+  port: 18007
+
+spring:
+  config:
+    import: classpath:swagger-common.yml
+  application:
+    name: seckill-service
+  datasource:
+    url: jdbc:mysql://localhost:33061/seckill?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&createDatabaseIfNotExist=true
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: Zheng#123
+      database: 7 # 与 user-service / 网关保持一致，共享 sa-token 会话；秒杀 key 统一用 seckill: 前缀隔离
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: update # 首次启动自动建 seckill_goods / seckill_order 两张表
+    properties:
+      hibernate:
+        format_sql: true
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    listener:
+      simple:
+        retry:
+          enabled: true
+          max-attempts: 3    # 消费失败重试 3 次，耗尽后丢弃（可扩展死信队列
+
+
+seckill:
+  mq:
+    exchange: seckill.exchange
+    routing-key: seckill.order.create
+    queue: seckill.order.queue
+    
+    
+sa-token:
+  # token 名称（同时也是 cookie 名称），必须与 user-service / 网关一致
+  token-name: satoken
+  timeout: 2592000
+  active-timeout: -1
+  is-concurrent: true
+  is-share: false
+  token-style: uuid
+  is-log: true
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://127.0.0.1:8761/eureka
+  instance:
+    status-page-url: http://localhost:18007/doc.html
+
+logging:
+  level:
+    com.botter.shop: info

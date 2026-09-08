@@ -68,6 +68,14 @@ public enum ResultMsgEnum {
     NO_PERMISSION(500700, "没有操作权限"),
     ROLE_NOT_EXIST(500701, "角色不存在"),
 
+    // ==================== 秒杀模块异常 5008xx ====================
+    SECKILL_NOT_EXIST(500800, "秒杀活动不存在"),
+    SECKILL_NOT_START(500801, "秒杀活动尚未开始"),
+    SECKILL_END(500802, "秒杀活动已结束"),
+    SECKILL_SOLD_OUT(500803, "商品已被抢光"),
+    SECKILL_REPEAT(500804, "每人限购一件，请勿重复抢购"),
+    SECKILL_STOCK_FAIL(500805, "扣减商品库存失败，请稍后重试"),
+
 
     ES_SERVICE_ERROR(5008001,"ES错误,错误信息:%s");
 

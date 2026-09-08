@@ -35,7 +35,10 @@ public class AuthWebFilter implements WebFilter, Ordered {
             "/user/login",
             "/user/register",
             "/favicon.ico",
-            "/goods"
+            "/goods",
+            // 秒杀列表/详情允许游客浏览，下单接口 /seckill/do 仍需登录
+            "/seckill/list",
+            "/seckill/detail"
     );
 
     /** 与 application.yml 中 globalcors.allowed-origins 保持一致 */
